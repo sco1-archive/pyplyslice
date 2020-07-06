@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "pyplyslice"
+version = "1.0.0"
+description = "Helper Utilities for Slicing PLY Objects at Specific Height(s)"
+authors = ["S. Co1 <sco1.git@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/sco1/pyplyslice"
+repository = "https://github.com/sco1/pyplyslice"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Typing :: Typed",
+]
+
+[tool.poetry.dependencies]
+python = "~3.8"
+openpyxl = "^3.0"
+pandas = "^1.0"
+trimesh = "^3.7"
+typer = "^0.3"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^19.10b0"}
+flake8-annotations = "^2.2"
+flake8-bugbear = "^20.1"
+flake8-docstrings = "^1.5"
+flake8-import-order = "^0.18"
+flake8-tidy-imports = "^4.1"
+flake8-todo = "^0.7"
+pep8-naming = "^0.11"
+pre-commit = "^2.6"
+pytest = "^5.4"
+pytest-check = "^0.3"
+pytest-cov = "^2.10"
+pytest-mock = "^3.1"
+
+[tool.black]
+line-length = 100
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

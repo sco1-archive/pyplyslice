@@ -6,25 +6,25 @@ import pandas as pd
 import trimesh
 
 
-def slice_at_z(mesh: trimesh.Trimesh, z: float) -> trimesh.path.Path3D:
+def slice_at_z(mesh: trimesh.Trimesh, slice_z: float) -> trimesh.path.Path3D:
     """Return the slice of the provided mesh, parallel to the XY plane, at the provided Z value."""
-    return mesh.section(plane_normal=[0, 0, 1], plane_origin=[0, 0, z])
+    return mesh.section(plane_normal=[0, 0, 1], plane_origin=[0, 0, slice_z])
 
 
 def slice_to_csv(
-    mesh_slice: trimesh.path.Path3D, scan_name: str, z: float, out_dir: Path = Path()
+    mesh_slice: trimesh.path.Path3D, scan_name: str, slice_z: float, out_dir: Path = Path()
 ) -> None:
     """
     Dump the vertices of the provided slice to a CSV file.
 
-    Output CSV file name will be built as `<scan_name>_zslice_<z>.CSV`
+    Output CSV file name will be built as `<scan_name>_zslice_<slice_z>.CSV`
 
     Output directory may be optionally specified, but will default to the current working directory.
 
     NOTE: Coordinate values are output to 3 decimal places.
     NOTE: Contents of any existing output file of the same name will be silently overwritten.
     """
-    out_filename = f"{scan_name}_zslice_{z}.CSV"
+    out_filename = f"{scan_name}_zslice_{slice_z:.0f}.CSV"
     out_filepath = out_dir / out_filename
 
     # `mesh_slice.vertices` is just a numpy array in disguise, so we can dump it directly
@@ -43,17 +43,19 @@ def parse_slice_heights(filepath: Path) -> t.Dict[str, float]:
 
     NOTE: Any duplicate FileName entries are dropped, the first seen value will be retained as the
     slice height for the file. File names are case sensitive.
-    NOTE: FileName will be the name of the scan file without the *.PLY extension
+    NOTE: Entries in the FileName column are assumed to always contain the file extension, which is
+    ignored for the comparison.
     """
     scan_data_df = pd.read_excel(filepath, engine="openpyxl", usecols=["FileName", "Z'"])
     scan_data_df.drop_duplicates(subset="FileName", inplace=True)
 
     return {
-        file_name: slice_height for file_name, slice_height in scan_data_df.itertuples(index=False)
+        Path(file_name).stem: slice_height
+        for file_name, slice_height in scan_data_df.itertuples(index=False)
     }
 
 
-def slice_pipeline(filepath: Path, z: float, out_dir: t.Optional[Path] = None) -> None:
+def slice_pipeline(filepath: Path, slice_z: float, out_dir: t.Optional[Path] = None) -> None:
     """
     Full processing pipeline for slicing the provided PLY file at the specified Z level.
 
@@ -66,8 +68,8 @@ def slice_pipeline(filepath: Path, z: float, out_dir: t.Optional[Path] = None) -
     scan_name = filepath.stem
 
     mesh = trimesh.load_mesh(filepath)
-    mesh_slice = slice_at_z(mesh, z)
-    slice_to_csv(mesh_slice, scan_name, z, out_dir)
+    mesh_slice = slice_at_z(mesh, slice_z)
+    slice_to_csv(mesh_slice, scan_name, slice_z, out_dir)
 
 
 def batch_slice_pipeline(
@@ -85,7 +87,8 @@ def batch_slice_pipeline(
         * FileName
         * Z'
 
-    Where Z' is taken as the height of the slice. All other columns are ignored.
+    Where Z' is taken as the height of the slice. All other columns are ignored. The FileName column
+    will contain a file extension, which is ignored for the comparison.
 
     If a PLY file is not present in the spreadsheet then no slice will be taken. Filename comparison
     is case sensitive.
@@ -93,4 +96,15 @@ def batch_slice_pipeline(
     NOTE: To simplify path case-sensitivity considerations for operating systems that are not
     Windows, scan file extensions are assumed to always be lowercase (`".ply"`).
     """
-    raise NotImplementedError
+    slice_heights = parse_slice_heights(key_spreadsheet)
+
+    glob_pattern = "*.ply"
+    if recurse:
+        glob_pattern = f"**/{glob_pattern}"
+
+    for scan_filepath in scan_path.glob(glob_pattern):
+        filename = scan_filepath.stem
+        slice_z = slice_heights.get(filename)
+
+        if slice_z:
+            slice_pipeline(scan_filepath, slice_z, out_dir)

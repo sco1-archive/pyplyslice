@@ -16,7 +16,7 @@ def single(
 ) -> None:
     """Slice the provided scan file at the specified slice height & output to CSV."""
     if scan_filepath is None:
-        scan_filepath = _prompt_for_file()
+        scan_filepath = _prompt_for_file(title="Select scan file to slice")
 
     io.slice_pipeline(scan_filepath, slice_z)
 
@@ -36,7 +36,7 @@ def batch(
         scan_dir = _prompt_for_dir()
 
     if key_spreadsheet is None:
-        key_spreadsheet = _prompt_for_file()
+        key_spreadsheet = _prompt_for_file(title="Select slice height spreadsheet key")
 
     io.batch_slice_pipeline(scan_dir, key_spreadsheet, recurse=recurse)
 
@@ -48,16 +48,12 @@ def main(ctx: typer.Context) -> None:  # pragma: no cover
     pass
 
 
-def _prompt_for_file(start_dir: Path = Path()) -> Path:  # pragma: no cover
+def _prompt_for_file(title: str, start_dir: Path = Path()) -> Path:  # pragma: no cover
     """Open a Tk file selection dialog to prompt the user to select a single file for processing."""
     root = tk.Tk()
     root.withdraw()
 
-    return Path(
-        filedialog.askopenfilename(
-            title="Select scan file for processing.", initialdir=start_dir, multiple=False,
-        )
-    )
+    return Path(filedialog.askopenfilename(title=title, initialdir=start_dir, multiple=False))
 
 
 def _prompt_for_dir(start_dir: Path = Path()) -> Path:  # pragma: no cover
@@ -67,7 +63,7 @@ def _prompt_for_dir(start_dir: Path = Path()) -> Path:  # pragma: no cover
 
     return Path(
         filedialog.askdirectory(
-            title="Select scan directory for batch processing.", initialdir=start_dir,
+            title="Select scan directory for batch processing", initialdir=start_dir,
         )
     )
 

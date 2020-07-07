@@ -78,6 +78,8 @@ def slice_pipeline(filepath: Path, slice_z: float, out_dir: t.Optional[Path] = N
     mesh_slice = slice_at_z(mesh, slice_z)
     slice_to_csv(mesh_slice, scan_name, slice_z, out_dir)
 
+    print(f"Slicing complete ... sliced '{scan_name}' at Z' = {slice_z:.3f}")
+
 
 def batch_slice_pipeline(
     scan_path: Path,

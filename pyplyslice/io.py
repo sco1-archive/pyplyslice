@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 import trimesh
 
-warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence numpy yelling at trimesh
+warnings.filterwarnings(
+    "ignore", category=np.VisibleDeprecationWarning
+)  # Silence numpy yelling at trimesh
 
 
 def slice_at_z(mesh: trimesh.Trimesh, slice_z: float) -> trimesh.path.Path3D:
@@ -31,7 +33,9 @@ def slice_to_csv(
     out_filepath = out_dir / out_filename
 
     # `mesh_slice.vertices` is just a numpy array in disguise, so we can dump it directly
-    np.savetxt(out_filepath, mesh_slice.vertices, fmt="%.3f", delimiter=",", header="x,y,z")
+    np.savetxt(
+        out_filepath, mesh_slice.vertices, fmt="%.3f", delimiter=",", comments="", header="x,y,z"
+    )
 
 
 def parse_slice_heights(filepath: Path) -> t.Dict[str, float]:

@@ -20,6 +20,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry.scripts]
+pyplyslice = "pyplyslice.ui:pyplyslice_cli"
+
 [tool.poetry.dependencies]
 python = "~3.8"
 openpyxl = "^3.0"

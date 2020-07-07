@@ -1,9 +1,12 @@
 import typing as t
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import trimesh
+
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence numpy yelling at trimesh
 
 
 def slice_at_z(mesh: trimesh.Trimesh, slice_z: float) -> trimesh.path.Path3D:
@@ -102,9 +105,17 @@ def batch_slice_pipeline(
     if recurse:
         glob_pattern = f"**/{glob_pattern}"
 
+    total_count = 0
+    found_count = 0
     for scan_filepath in scan_path.glob(glob_pattern):
+        total_count += 1
         filename = scan_filepath.stem
         slice_z = slice_heights.get(filename)
 
         if slice_z:
+            found_count += 1
             slice_pipeline(scan_filepath, slice_z, out_dir)
+        else:
+            print(f"Could not find Z' for '{filename}'")
+
+    print(f"Processing Complete ... Sliced {found_count} of {total_count} PLY files")

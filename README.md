@@ -16,23 +16,18 @@ $ cd <project_dir>
 $ pip install .
 ```
 
-Alternatively, prebuilt binaries for each release are provided at https://github.com/sco1/obj-ply-scaler/releases
-
 ## Usage
 Once installed, the `pyplyslice` CLI can be invoked directly from the command line:
 ```bash
 $ pyplyslice <inputs go here>
 ```
 
-Or, if a prebuilt binary is present, this may be called directly
-```bash
-$ pyplyslice.exe <inputs go here>
-```
-
 The `pyplyslice` CLI can also be invoked from the root of this repository using Python:
 ```bash
 $ python ./pyplyslice/ui.py <inputs go here>
 ```
+
+Helper Jupyter Notebooks are also provided in the root of the repository to handle basic tasks.
 
 ### `pyplyslice single`
 Slice the provided scan file at the specified slice height & output to CSV.

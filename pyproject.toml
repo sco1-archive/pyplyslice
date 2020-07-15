@@ -25,7 +25,6 @@ pyplyslice = "pyplyslice.ui:pyplyslice_cli"
 
 [tool.poetry.dependencies]
 python = "~3.8"
-openpyxl = "^3.0"
 pandas = "^1.0"
 scipy = "^1.5"
 shapely = "^1.7"

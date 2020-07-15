@@ -12,33 +12,28 @@ pyplyslice_cli = typer.Typer()
 @pyplyslice_cli.command()
 def single(
     scan_filepath: Path = typer.Option(None, exists=True, file_okay=True, dir_okay=False),
-    slice_z: float = typer.Option(None, prompt="Enter slice height"),
 ) -> None:
     """Slice the provided scan file at the specified slice height & output to CSV."""
     if scan_filepath is None:
         scan_filepath = _prompt_for_file(title="Select scan file to slice")
 
-    io.slice_pipeline(scan_filepath, slice_z)
+    io.slice_pipeline(scan_filepath)
 
 
 @pyplyslice_cli.command()
 def batch(
     scan_dir: Path = typer.Option(None, exists=True, file_okay=False, dir_okay=True),
-    key_spreadsheet: Path = typer.Option(None, exists=True, file_okay=True, dir_okay=False),
     recurse: bool = False,
 ) -> None:
     """
-    Batch process all scans in the specified directory using the slice heights spreadsheet key.
+    Batch process all scans in the specified directory.
 
     Recursive processing may be optionally specified (Default: False).
     """
     if scan_dir is None:
         scan_dir = _prompt_for_dir()
 
-    if key_spreadsheet is None:
-        key_spreadsheet = _prompt_for_file(title="Select slice height spreadsheet key")
-
-    io.batch_slice_pipeline(scan_dir, key_spreadsheet, recurse=recurse)
+    io.batch_slice_pipeline(scan_dir, recurse=recurse)
 
 
 @pyplyslice_cli.callback(invoke_without_command=True, no_args_is_help=True)

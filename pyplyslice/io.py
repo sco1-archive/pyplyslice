@@ -28,7 +28,7 @@ def calculate_plane_normal(landmarks: pd.DataFrame) -> np.ndarray:
 
 def slice_at_glabella(
     mesh: trimesh.Trimesh, landmarks: pd.DataFrame, z_offset_mm: float = 15
-) -> trimesh.path.Path3D:
+) -> t.Tuple[trimesh.path.Path3D, float]:
     """
     Slice the provided mesh parallel to the calculated slicing plane at the provided z offset.
 
@@ -37,12 +37,17 @@ def slice_at_glabella(
 
     Slice plane origin uses the glabella XY coordinates, along with the Z coordinate offset by
     `z_offset_mm`, which defaults to 15 mm.
+
+    The calculated z offset is returned alongside the slice.
     """
     plane_normal = calculate_plane_normal(landmarks)
     plane_origin_xyz = landmarks["h_g"]  # Use glabella as slicing plane origin
     plane_origin_xyz.z += z_offset_mm
 
-    return mesh.section(plane_normal=plane_normal, plane_origin=plane_origin_xyz)
+    return (
+        mesh.section(plane_normal=plane_normal, plane_origin=plane_origin_xyz),
+        plane_origin_xyz.z,  # Return for use in processing pipelines
+    )
 
 
 def slice_to_csv(
@@ -80,24 +85,42 @@ def parse_landmarks(filepath: Path) -> pd.DataFrame:
     return pd.read_csv(filepath, sep=" ", index_col=0).T
 
 
-def slice_pipeline(filepath: Path, slice_z: float, out_dir: t.Optional[Path] = None) -> None:
+def slice_pipeline(
+    scan_filepath: Path,
+    landmarks_filepath: t.Optional[Path] = None,
+    out_dir: t.Optional[Path] = None,
+) -> bool:
     """
-    Full processing pipeline for slicing the provided PLY file at the specified Z level.
+    Full processing pipeline for slicing the provided PLY file using the provided landmarks.
+
+    A path to the landmarks *.txt may be optionally provided, otherwise an attempt will be made to
+    locate it in the same directory as the scan file. The landmarks file is assumed to have the same
+    stem as the provided PLY file. Association of landmarks file to PLY file is case sensitive.
 
     Output directory may be optionally specified, but will default to the same directory as the
     specified PLY filepath.
+
+    A boolean value is returned to indicate pipeline success
     """
-    raise NotImplementedError
     if not out_dir:
-        out_dir = filepath.parent
+        out_dir = scan_filepath.parent
 
-    scan_name = filepath.stem
+    scan_name = scan_filepath.stem
+    if not landmarks_filepath:
+        # Attempt to locate landmarks file alongside the provided PLY file
+        landmarks_filepath = scan_filepath.with_suffix(".txt")
 
-    mesh = trimesh.load_mesh(filepath)
-    mesh_slice = slice_at_z(mesh, slice_z)
-    slice_to_csv(mesh_slice, scan_name, slice_z, out_dir)
+    if not landmarks_filepath.exists():
+        print(f"Could not find landmarks file: '{landmarks_filepath}' ... skipping slicing")
+        return False
 
-    print(f"Slicing complete ... sliced '{scan_name}' at Z' = {slice_z:.3f}")
+    mesh = trimesh.load_mesh(scan_filepath)
+    landmarks = parse_landmarks(landmarks_filepath)
+    mesh_slice, z_offset = slice_at_glabella(mesh, landmarks)
+    slice_to_csv(mesh_slice, scan_name, z_offset, out_dir)
+
+    print(f"Slicing complete ... sliced '{scan_name}' at Z' = {z_offset:.3f}")
+    return True
 
 
 def batch_slice_pipeline(
@@ -111,8 +134,6 @@ def batch_slice_pipeline(
     NOTE: To simplify path case-sensitivity considerations for operating systems that are not
     Windows, scan file extensions are assumed to always be lowercase (`".ply"`).
     """
-    raise NotImplementedError
-
     glob_pattern = "*.ply"
     if recurse:
         glob_pattern = f"**/{glob_pattern}"
@@ -121,13 +142,9 @@ def batch_slice_pipeline(
     found_count = 0
     for scan_filepath in scan_path.glob(glob_pattern):
         total_count += 1
-        filename = scan_filepath.stem
-        slice_z = slice_heights.get(filename)  # TODO: Refactor to parse from landmark .txt
+        slice_success = slice_pipeline(scan_filepath, out_dir)
 
-        if slice_z:
+        if slice_success:
             found_count += 1
-            slice_pipeline(scan_filepath, slice_z, out_dir)
-        else:
-            print(f"Could not find Z' for '{filename}'")
 
-    print(f"Processing Complete ... Sliced {found_count} of {total_count} PLY files")
+    print(f"Processing complete ... Sliced {found_count} of {total_count} PLY files")

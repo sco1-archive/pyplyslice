@@ -26,6 +26,17 @@ def calculate_plane_normal(landmarks: pd.DataFrame) -> np.ndarray:
     return normals.squeeze()  # We only gave one triangle we can squeeze this down to the one normal
 
 
+def sort_slice_vertices(mesh_slice: trimesh.path.Path3D) -> np.ndarray:
+    """Sort coordinates clockwise based on their angle, from the centroid, in the XY plane."""
+    normalized_x = mesh_slice.vertices[:, 0] - mesh_slice.centroid[0]
+    normalized_y = mesh_slice.vertices[:, 1] - mesh_slice.centroid[1]
+
+    theta = np.arctan2(normalized_x, normalized_y)
+    sort_idx = np.argsort(theta)
+
+    return mesh_slice.vertices[sort_idx, :]
+
+
 def slice_at_glabella(
     mesh: trimesh.Trimesh, landmarks: pd.DataFrame, z_offset_mm: float = 15
 ) -> t.Tuple[trimesh.path.Path3D, float]:
@@ -67,8 +78,10 @@ def slice_to_csv(
     out_filepath = out_dir / out_filename
 
     # `mesh_slice.vertices` is just a numpy array in disguise, so we can dump it directly
+    # Sort slice vertices before dumping out
+    sorted_vertices = sort_slice_vertices(mesh_slice)
     np.savetxt(
-        out_filepath, mesh_slice.vertices, fmt="%.3f", delimiter=",", comments="", header="x,y,z"
+        out_filepath, sorted_vertices, fmt="%.3f", delimiter=",", comments="", header="x,y,z"
     )
 
 

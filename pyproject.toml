@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyplyslice"
-version = "1.0.1"
+version = "1.1.0"
 description = "Helper Utilities for Slicing PLY Objects at Specific Height(s)"
 authors = ["S. Co1 <sco1.git@gmail.com>"]
 license = "MIT"
@@ -25,7 +25,6 @@ pyplyslice = "pyplyslice.ui:pyplyslice_cli"
 
 [tool.poetry.dependencies]
 python = "~3.8"
-openpyxl = "^3.0"
 pandas = "^1.0"
 scipy = "^1.5"
 shapely = "^1.7"
